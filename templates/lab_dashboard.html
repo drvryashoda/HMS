@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Lab Panel{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">Investigations Queue</h1>
+{% if investigations %}
+  <div class="table-responsive">
+    <table class="table table-bordered align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Patient</th>
+          <th>Doctor</th>
+          <th>Investigation</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for investigation in investigations %}
+          <tr>
+            <td>
+              {{ investigation.prescription.consultation.patient.name }}<br />
+              <span class="small text-muted">{{ investigation.prescription.consultation.main_complaints }}</span>
+            </td>
+            <td>{{ investigation.prescription.consultation.doctor.name }}</td>
+            <td>{{ investigation.name }}</td>
+            <td>
+              <span class="badge bg-warning text-dark">{{ investigation.status }}</span>
+            </td>
+            <td>
+              <form method="post" class="d-flex align-items-center gap-2">
+                <input type="hidden" name="investigation_id" value="{{ investigation.id }}" />
+                <select name="status" class="form-select form-select-sm">
+                  {% for status in ['Pending', 'In Progress', 'Completed'] %}
+                    <option value="{{ status }}" {% if investigation.status == status %}selected{% endif %}>{{ status }}</option>
+                  {% endfor %}
+                </select>
+                <button class="btn btn-sm btn-primary" type="submit">Update</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="alert alert-info">No investigations to display.</div>
+{% endif %}
+{% endblock %}

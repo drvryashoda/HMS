@@ -1,0 +1,44 @@
+body {
+  background-color: #f5f7fb;
+}
+
+.navbar-brand {
+  font-weight: 600;
+  letter-spacing: 0.03rem;
+}
+
+.card {
+  border: none;
+  border-radius: 0.75rem;
+}
+
+.card .card-header {
+  border-top-left-radius: 0.75rem;
+  border-top-right-radius: 0.75rem;
+}
+
+.table thead th {
+  white-space: nowrap;
+}
+
+.list-group-item-warning {
+  background-color: #fff4cc;
+}
+
+.flash-container {
+  position: sticky;
+  top: 1rem;
+  z-index: 1000;
+}
+
+@media print {
+  body {
+    background-color: #fff;
+  }
+  nav,
+  .flash-container,
+  .btn,
+  .navbar {
+    display: none !important;
+  }
+}
