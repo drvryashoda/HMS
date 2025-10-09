@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% block title %}Billing - {{ consultation.patient.name }}{% endblock %}
+{% block content %}
+<div class="card shadow-sm">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h1 class="h5 mb-0">Billing for {{ consultation.patient.name }}</h1>
+    <button class="btn btn-outline-primary" onclick="window.print()">Print Bill</button>
+  </div>
+  <div class="card-body">
+    <form method="post">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">Doctor Consultation (₹)</label>
+          <input type="number" step="0.01" class="form-control" name="doctor_fee" value="{{ bill.doctor_fee or '' }}" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Investigations (₹)</label>
+          <input type="number" step="0.01" class="form-control" name="investigation_fee" value="{{ bill.investigation_fee or '' }}" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Medicines (₹)</label>
+          <input type="number" step="0.01" class="form-control" name="medicine_fee" value="{{ bill.medicine_fee or '' }}" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Miscellaneous (₹)</label>
+          <input type="number" step="0.01" class="form-control" name="miscellaneous_fee" value="{{ bill.miscellaneous_fee or '' }}" />
+        </div>
+      </div>
+      <div class="text-end mt-3">
+        <button class="btn btn-primary" type="submit">Save Bill</button>
+      </div>
+    </form>
+    <hr />
+    <div class="text-end">
+      <h2 class="h5">Total: ₹ {{ '%.2f'|format(bill.total if bill else 0) }}</h2>
+    </div>
+  </div>
+</div>
+{% endblock %}

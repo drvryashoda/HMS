@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block title %}Pharmacy Panel{% endblock %}
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-5">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h5">Inventory</h2>
+        <form method="post" action="{{ url_for('pharmacy_inventory_update') }}" class="mb-3">
+          <div class="row g-2">
+            <div class="col-md-6">
+              <input type="text" name="name" class="form-control" placeholder="Medicine name" required />
+            </div>
+            <div class="col-md-3">
+              <input type="number" name="quantity" class="form-control" placeholder="Qty" min="0" />
+            </div>
+            <div class="col-md-12">
+              <input type="text" name="description" class="form-control" placeholder="Description" />
+            </div>
+          </div>
+          <div class="text-end mt-2">
+            <button class="btn btn-primary" type="submit">Save</button>
+          </div>
+        </form>
+        {% if inventory_list %}
+          <div class="table-responsive" style="max-height: 260px; overflow-y: auto;">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Qty</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for medicine in inventory_list|sort(attribute='name') %}
+                  <tr>
+                    <td>{{ medicine.name }}</td>
+                    <td>{{ medicine.quantity }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-muted">No medicines in inventory.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h5">Prescriptions</h2>
+        {% if prescriptions %}
+          <div class="accordion" id="prescriptionAccordion">
+            {% for prescription in prescriptions %}
+              <div class="accordion-item">
+                <h2 class="accordion-header" id="heading{{ loop.index }}">
+                  <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}">
+                    {{ prescription.consultation.patient.name }} - {{ prescription.consultation.doctor.name }}
+                    <span class="badge bg-info text-dark ms-2">{{ prescription.consultation.status }}</span>
+                  </button>
+                </h2>
+                <div id="collapse{{ loop.index }}" class="accordion-collapse collapse" data-bs-parent="#prescriptionAccordion">
+                  <div class="accordion-body">
+                    <p><strong>Diagnosis:</strong> {{ prescription.diagnosis or 'N/A' }}</p>
+                    <h3 class="h6">Medicines</h3>
+                    {% if prescription.medicines %}
+                      <ul class="list-group mb-3">
+                        {% for medicine in prescription.medicines %}
+                          {% set available = inventory.get(medicine.name) %}
+                          <li class="list-group-item d-flex justify-content-between align-items-start {% if not available %}list-group-item-warning{% endif %}">
+                            <div>
+                              <strong>{{ medicine.name }}</strong>
+                              <div class="small text-muted">
+                                {{ medicine.dosage or '' }} {{ medicine.frequency or '' }} {{ medicine.duration or '' }}
+                              </div>
+                            </div>
+                            <span class="badge {% if available %}bg-success{% else %}bg-danger{% endif %}">
+                              {% if available %}In stock ({{ available.quantity }}){% else %}Unavailable{% endif %}
+                            </span>
+                          </li>
+                        {% endfor %}
+                      </ul>
+                    {% else %}
+                      <p class="text-muted">No medicines prescribed.</p>
+                    {% endif %}
+                    <h3 class="h6">Investigations</h3>
+                    {% if prescription.investigations %}
+                      <ul>
+                        {% for investigation in prescription.investigations %}
+                          <li>{{ investigation.name }} - {{ investigation.status }}</li>
+                        {% endfor %}
+                      </ul>
+                    {% else %}
+                      <p class="text-muted">No investigations.</p>
+                    {% endif %}
+                    <p class="mb-0"><strong>Follow-up:</strong> {{ prescription.follow_up or 'N/A' }}</p>
+                  </div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="alert alert-info">No prescriptions yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

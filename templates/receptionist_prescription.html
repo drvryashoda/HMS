@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}Prescription View{% endblock %}
+{% block extra_js %}
+<script>
+  function printPrescription() {
+    window.print();
+  }
+</script>
+{% endblock %}
+{% block content %}
+<div class="card shadow-sm">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h1 class="h5 mb-0">Prescription - {{ consultation.patient.name }}</h1>
+    <button class="btn btn-outline-primary" onclick="printPrescription()">Print</button>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-md-6">
+        <p class="mb-1"><strong>Doctor:</strong> {{ consultation.doctor.name }}</p>
+        <p class="mb-1"><strong>Status:</strong> {{ consultation.status }}</p>
+        <p class="mb-1"><strong>Date:</strong> {{ consultation.created_at.strftime('%d %b %Y %I:%M %p') }}</p>
+      </div>
+      <div class="col-md-6">
+        <p class="mb-1"><strong>Patient:</strong> {{ consultation.patient.name }}</p>
+        <p class="mb-1"><strong>Age/Sex:</strong> {{ consultation.patient.age }} / {{ consultation.patient.sex }}</p>
+        <p class="mb-1"><strong>BP:</strong> {{ consultation.bp or 'N/A' }} &nbsp; <strong>Weight:</strong> {{ consultation.weight or 'N/A' }}</p>
+      </div>
+    </div>
+    <hr />
+    <h2 class="h6">Main Complaints</h2>
+    <p>{{ consultation.main_complaints or 'N/A' }}</p>
+    {% if consultation.prescription %}
+      <h2 class="h6">Diagnosis</h2>
+      <p>{{ consultation.prescription.diagnosis or 'N/A' }}</p>
+      <h2 class="h6">Medicines</h2>
+      {% if consultation.prescription.medicines %}
+        <ul>
+          {% for medicine in consultation.prescription.medicines %}
+            <li>
+              <strong>{{ medicine.name }}</strong>
+              {% if medicine.dosage %} - {{ medicine.dosage }}{% endif %}
+              {% if medicine.frequency %} | {{ medicine.frequency }}{% endif %}
+              {% if medicine.duration %} | {{ medicine.duration }}{% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted">No medicines added.</p>
+      {% endif %}
+      <h2 class="h6">Investigations</h2>
+      {% if consultation.prescription.investigations %}
+        <ul>
+          {% for investigation in consultation.prescription.investigations %}
+            <li>{{ investigation.name }} - <span class="badge bg-warning text-dark">{{ investigation.status }}</span></li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-muted">No investigations ordered.</p>
+      {% endif %}
+      <h2 class="h6">Notes</h2>
+      <p>{{ consultation.prescription.notes or 'N/A' }}</p>
+      <p class="mb-0"><strong>Follow-up:</strong> {{ consultation.prescription.follow_up or 'N/A' }}</p>
+    {% else %}
+      <div class="alert alert-warning">Prescription not created yet.</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block title %}Receptionist Panel{% endblock %}
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-5">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">New Consultation</h2>
+        <form method="post">
+          <div class="mb-3">
+            <label class="form-label">Patient Name</label>
+            <input type="text" name="name" class="form-control" required />
+          </div>
+          <div class="row g-2">
+            <div class="col-md-4">
+              <label class="form-label">Age</label>
+              <input type="number" name="age" class="form-control" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Sex</label>
+              <select name="sex" class="form-select">
+                <option value="">--</option>
+                <option>Male</option>
+                <option>Female</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Weight (kg)</label>
+              <input type="text" name="weight" class="form-control" />
+            </div>
+          </div>
+          <div class="row g-2 mt-1">
+            <div class="col-md-6">
+              <label class="form-label">Blood Pressure</label>
+              <input type="text" name="bp" class="form-control" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Phone</label>
+              <input type="text" name="phone" class="form-control" />
+            </div>
+          </div>
+          <div class="mb-3 mt-1">
+            <label class="form-label">Address</label>
+            <input type="text" name="address" class="form-control" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Main Complaints</label>
+            <textarea name="main_complaints" class="form-control" rows="2"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Assign Doctor</label>
+            <select name="doctor_id" class="form-select" required>
+              <option value="">Select Doctor</option>
+              {% for doctor in doctors %}
+                <option value="{{ doctor.id }}">{{ doctor.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary">Add Consultation</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h2 class="h5 mb-3">My Registrations</h2>
+        {% if consultations %}
+          <div class="table-responsive">
+            <table class="table table-striped align-middle">
+              <thead>
+                <tr>
+                  <th>Patient</th>
+                  <th>Doctor</th>
+                  <th>Status</th>
+                  <th>Registered</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for consultation in consultations %}
+                  <tr>
+                    <td>
+                      <strong>{{ consultation.patient.name }}</strong><br />
+                      <span class="small text-muted">{{ consultation.main_complaints or 'N/A' }}</span>
+                    </td>
+                    <td>{{ consultation.doctor.name }}</td>
+                    <td><span class="badge bg-info text-dark">{{ consultation.status }}</span></td>
+                    <td>{{ consultation.created_at.strftime('%d %b %Y %I:%M %p') }}</td>
+                    <td class="text-end">
+                      <a class="btn btn-sm btn-outline-primary" href="{{ url_for('receptionist_consultation_view', consultation_id=consultation.id) }}">Prescription</a>
+                      <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('receptionist_bill', consultation_id=consultation.id) }}">Billing</a>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="alert alert-info">No consultations registered yet.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

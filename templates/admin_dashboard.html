@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<h1 class="h4 mb-4">Clinic Overview</h1>
+{% if 'dashboard' in allowed %}
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h2 class="h6 text-uppercase text-muted">Total Consultations</h2>
+          <div class="display-6">{{ stats.total }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h2 class="h6 text-uppercase text-muted">Today's Consultations</h2>
+          {% if stats.today %}
+            <ul class="list-unstyled mb-0">
+              {% for doctor, count in stats.today %}
+                <li><strong>{{ doctor }}</strong>: {{ count }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted mb-0">No consultations today.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h2 class="h6 text-uppercase text-muted">This Month</h2>
+          {% if stats.month %}
+            <ul class="list-unstyled mb-0">
+              {% for doctor, count in stats.month %}
+                <li><strong>{{ doctor }}</strong>: {{ count }}</li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted mb-0">No consultations in selected period.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+<div class="row g-4">
+  {% if 'user_management' in allowed %}
+    <div class="col-lg-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h2 class="h5 mb-3">Create Account</h2>
+          <form method="post" action="{{ url_for('admin_create_user') }}">
+            <div class="row g-2">
+              <div class="col-md-6">
+                <label class="form-label">Name</label>
+                <input type="text" name="name" class="form-control" required />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" class="form-control" required />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Role</label>
+                <select name="role" class="form-select" id="role-select" required>
+                  {% for role in roles %}
+                    <option value="{{ role }}">{{ role|capitalize }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Password</label>
+                <input type="password" name="password" class="form-control" required />
+              </div>
+              <div class="col-12" id="permission-block" style="display: none;">
+                <label class="form-label">Sub-admin Permissions</label>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="permissions" value="dashboard" id="permDashboard" />
+                  <label class="form-check-label" for="permDashboard">Dashboard</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="permissions" value="user_management" id="permUsers" />
+                  <label class="form-check-label" for="permUsers">Manage Users</label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" name="permissions" value="inventory_management" id="permInventory" />
+                  <label class="form-check-label" for="permInventory">Manage Inventory</label>
+                </div>
+              </div>
+            </div>
+            <div class="text-end mt-3">
+              <button class="btn btn-primary" type="submit">Create User</button>
+            </div>
+          </form>
+        </div>
+        {% if users %}
+          <div class="table-responsive border-top">
+            <table class="table table-sm mb-0">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Permissions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for user in users %}
+                  <tr>
+                    <td>{{ user.name }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.role|capitalize }}</td>
+                    <td>{{ user.panel_permissions or '-' }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+
+  {% if 'inventory_management' in allowed %}
+    <div class="col-lg-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-body">
+          <h2 class="h5 mb-3">Manage Pharmacy Inventory</h2>
+          <form method="post" action="{{ url_for('admin_inventory_update') }}" class="mb-3">
+            <div class="mb-2">
+              <label class="form-label">Bulk Upload (name, quantity, description per line)</label>
+              <textarea name="bulk_list" class="form-control" rows="4" placeholder="Paracetamol, 100, Tablets"></textarea>
+            </div>
+            <div class="text-end">
+              <button class="btn btn-outline-primary" type="submit">Bulk Update</button>
+            </div>
+          </form>
+          <form method="post" action="{{ url_for('admin_inventory_update') }}">
+            <div class="row g-2">
+              <div class="col-md-5">
+                <input type="text" class="form-control" name="name" placeholder="Name" required />
+              </div>
+              <div class="col-md-3">
+                <input type="number" class="form-control" name="quantity" placeholder="Qty" min="0" />
+              </div>
+              <div class="col-md-4">
+                <input type="text" class="form-control" name="description" placeholder="Description" />
+              </div>
+            </div>
+            <div class="text-end mt-2">
+              <button class="btn btn-primary" type="submit">Save</button>
+            </div>
+          </form>
+        </div>
+        {% if inventory %}
+          <div class="table-responsive border-top" style="max-height: 320px; overflow-y: auto;">
+            <table class="table table-striped mb-0">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Quantity</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for medicine in inventory %}
+                  <tr>
+                    <td>{{ medicine.name }}</td>
+                    <td>{{ medicine.quantity }}</td>
+                    <td>{{ medicine.description }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+  const roleSelect = document.getElementById('role-select');
+  const permissionBlock = document.getElementById('permission-block');
+  if (roleSelect) {
+    const togglePermissionBlock = () => {
+      permissionBlock.style.display = roleSelect.value === 'subadmin' ? 'block' : 'none';
+    };
+    roleSelect.addEventListener('change', togglePermissionBlock);
+    togglePermissionBlock();
+  }
+</script>
+{% endblock %}

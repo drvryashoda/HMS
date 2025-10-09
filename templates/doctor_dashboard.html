@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Doctor Panel{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4">Consultations Queue</h1>
+  <form class="d-flex" method="get">
+    <select class="form-select me-2" name="status">
+      <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All statuses</option>
+      {% for status in statuses %}
+        <option value="{{ status }}" {% if status_filter == status %}selected{% endif %}>{{ status }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn btn-outline-secondary" type="submit">Filter</button>
+  </form>
+</div>
+
+{% if consultations %}
+  <div class="list-group">
+    {% for consultation in consultations %}
+      <a
+        href="{{ url_for('doctor_consultation_detail', consultation_id=consultation.id) }}"
+        class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+      >
+        <div>
+          <strong>{{ consultation.patient.name }}</strong>
+          <div class="small text-muted">Complaints: {{ consultation.main_complaints or 'N/A' }}</div>
+        </div>
+        <span class="badge bg-info text-dark">{{ consultation.status }}</span>
+      </a>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="alert alert-info">No consultations assigned at the moment.</div>
+{% endif %}
+{% endblock %}
