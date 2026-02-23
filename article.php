@@ -18,8 +18,9 @@ $meta = seo_meta(
 
 require __DIR__ . '/app/header.php';
 ?>
-<section class="container section narrow">
+<section class="container section narrow article-detail">
     <article>
+        <?php if (!empty($article['featured_image'])): ?><img class="article-hero" src="<?= e($article['featured_image']) ?>" alt="<?= e($article['title']) ?>"><?php endif; ?>
         <h1><?= e($article['title']) ?></h1>
         <p><?= date('F d, Y', strtotime($article['created_at'])) ?></p>
         <div><?= nl2br(e($article['body'])) ?></div>

@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/_top.php';
 $pdo = db();
+$error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf($_POST['_csrf'] ?? '')) {
     if (($_POST['action'] ?? '') === 'create') {
@@ -12,27 +13,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf($_POST['_csrf'] ?? ''))
         $status = ($_POST['status'] ?? 'draft') === 'published' ? 'published' : 'draft';
         $featured = !empty($_POST['featured']) ? 1 : 0;
         $slug = generate_slug($title);
+        $featuredImage = upload_image('featured_image') ?: trim($_POST['featured_image_url'] ?? '');
 
-        $stmt = $pdo->prepare('INSERT INTO articles (title, slug, excerpt, body, seo_title, seo_description, status, featured, created_at, updated_at) VALUES (:title, :slug, :excerpt, :body, :seo_title, :seo_description, :status, :featured, :created_at, :updated_at)');
-        $stmt->execute([
-            'title' => $title,
-            'slug' => $slug,
-            'excerpt' => $excerpt,
-            'body' => $body,
-            'seo_title' => $seoTitle,
-            'seo_description' => $seoDescription,
-            'status' => $status,
-            'featured' => $featured,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        if (!$title || !$body) {
+            $error = 'Title and body are required.';
+        } else {
+            $stmt = $pdo->prepare('INSERT INTO articles (title, slug, excerpt, body, featured_image, seo_title, seo_description, status, featured, created_at, updated_at) VALUES (:title, :slug, :excerpt, :body, :featured_image, :seo_title, :seo_description, :status, :featured, :created_at, :updated_at)');
+            $stmt->execute([
+                'title' => $title,
+                'slug' => $slug,
+                'excerpt' => $excerpt,
+                'body' => $body,
+                'featured_image' => $featuredImage ?: null,
+                'seo_title' => $seoTitle,
+                'seo_description' => $seoDescription,
+                'status' => $status,
+                'featured' => $featured,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
 
-        $articleId = (int) $pdo->lastInsertId();
-        foreach (($_POST['category_ids'] ?? []) as $catId) {
-            $pdo->prepare('INSERT INTO article_category (article_id, category_id) VALUES (:aid, :cid)')->execute(['aid' => $articleId, 'cid' => (int) $catId]);
-        }
-        foreach (($_POST['tag_ids'] ?? []) as $tagId) {
-            $pdo->prepare('INSERT INTO article_tag (article_id, tag_id) VALUES (:aid, :tid)')->execute(['aid' => $articleId, 'tid' => (int) $tagId]);
+            $articleId = (int) $pdo->lastInsertId();
+            foreach (($_POST['category_ids'] ?? []) as $catId) {
+                $pdo->prepare('INSERT INTO article_category (article_id, category_id) VALUES (:aid, :cid)')->execute(['aid' => $articleId, 'cid' => (int) $catId]);
+            }
+            foreach (($_POST['tag_ids'] ?? []) as $tagId) {
+                $pdo->prepare('INSERT INTO article_tag (article_id, tag_id) VALUES (:aid, :tid)')->execute(['aid' => $articleId, 'tid' => (int) $tagId]);
+            }
         }
     }
 
@@ -46,12 +53,16 @@ $categories = $pdo->query('SELECT * FROM categories ORDER BY name')->fetchAll();
 $tags = $pdo->query('SELECT * FROM tags ORDER BY name')->fetchAll();
 ?>
 <h1>Articles</h1>
-<form method="post" class="card form-grid">
+<?php if ($error): ?><p class="alert error"><?= e($error) ?></p><?php endif; ?>
+<form method="post" enctype="multipart/form-data" class="card form-grid">
     <input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>">
     <input type="hidden" name="action" value="create">
     <input name="title" placeholder="Article Title" required>
     <textarea name="excerpt" placeholder="Short excerpt"></textarea>
     <textarea name="body" placeholder="Full article body" required></textarea>
+    <label>Featured image upload</label>
+    <input type="file" name="featured_image" accept="image/png,image/jpeg,image/webp">
+    <input name="featured_image_url" placeholder="or image URL (https://...)">
     <input name="seo_title" placeholder="SEO title (optional)">
     <textarea name="seo_description" placeholder="SEO description (optional)"></textarea>
     <label><input type="checkbox" name="featured" value="1"> Mark as featured</label>
@@ -67,9 +78,10 @@ $tags = $pdo->query('SELECT * FROM tags ORDER BY name')->fetchAll();
     <button>Create Article</button>
 </form>
 
-<table class="table"><tr><th>Title</th><th>Status</th><th>Featured</th><th>Action</th></tr>
+<table class="table"><tr><th>Image</th><th>Title</th><th>Status</th><th>Featured</th><th>Action</th></tr>
 <?php foreach ($articles as $a): ?>
 <tr>
+<td><?php if ($a['featured_image']): ?><img src="<?= e($a['featured_image']) ?>" alt="thumb" style="width:64px;height:44px;object-fit:cover;border-radius:6px;"><?php endif; ?></td>
 <td><?= e($a['title']) ?></td><td><?= e($a['status']) ?></td><td><?= $a['featured'] ? 'Yes' : 'No' ?></td>
 <td><form method="post"><input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>"><input type="hidden" name="action" value="delete"><input type="hidden" name="delete_id" value="<?= (int) $a['id'] ?>"><button>Delete</button></form></td>
 </tr>

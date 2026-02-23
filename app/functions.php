@@ -33,23 +33,18 @@ function e(?string $value): string
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
-function ensure_installed_or_redirect(): void
-{
-    if (!is_installed() && basename($_SERVER['SCRIPT_NAME']) !== 'index.php') {
-        redirect('/install/');
-    }
-}
-
 function seo_meta(string $title, string $description, array $keywords = []): array
 {
     $config = load_config();
     $siteName = $config['site_name'] ?? 'Doctor Portfolio';
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+    $scheme = $isHttps ? 'https' : 'http';
 
     return [
         'title' => $title . ' | ' . $siteName,
         'description' => $description,
         'keywords' => implode(', ', $keywords),
-        'canonical' => rtrim($config['site_url'] ?: ((isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST']), '/') . $_SERVER['REQUEST_URI'],
+        'canonical' => rtrim($config['site_url'] ?: ($scheme . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost')), '/') . ($_SERVER['REQUEST_URI'] ?? '/'),
     ];
 }
 
@@ -69,6 +64,27 @@ function db(): PDO
     ]);
 
     return $pdo;
+}
+
+function run_auto_migrations(): void
+{
+    static $done = false;
+    if ($done || !is_installed()) {
+        return;
+    }
+
+    $pdo = db();
+    $columns = $pdo->query("SHOW COLUMNS FROM articles LIKE 'featured_image'")->fetchAll();
+    if (!$columns) {
+        $pdo->exec('ALTER TABLE articles ADD COLUMN featured_image VARCHAR(255) NULL AFTER body');
+    }
+
+    $indexes = $pdo->query("SHOW INDEX FROM appointment_slots WHERE Key_name = 'uniq_slot'")->fetchAll();
+    if (!$indexes) {
+        $pdo->exec('ALTER TABLE appointment_slots ADD UNIQUE KEY uniq_slot (slot_date, slot_time)');
+    }
+
+    $done = true;
 }
 
 function generate_slug(string $title): string
@@ -111,4 +127,30 @@ function csrf_token(): string
 function verify_csrf(string $token): bool
 {
     return isset($_SESSION['_csrf']) && hash_equals($_SESSION['_csrf'], $token);
+}
+
+function upload_image(string $field): ?string
+{
+    if (empty($_FILES[$field]['name']) || !is_uploaded_file($_FILES[$field]['tmp_name'])) {
+        return null;
+    }
+
+    $allowed = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+    $mime = mime_content_type($_FILES[$field]['tmp_name']);
+    if (!isset($allowed[$mime])) {
+        return null;
+    }
+
+    $name = uniqid('img_', true) . '.' . $allowed[$mime];
+    $targetDir = base_path('uploads');
+    if (!is_dir($targetDir)) {
+        mkdir($targetDir, 0775, true);
+    }
+
+    $target = $targetDir . '/' . $name;
+    if (move_uploaded_file($_FILES[$field]['tmp_name'], $target)) {
+        return '/uploads/' . $name;
+    }
+
+    return null;
 }

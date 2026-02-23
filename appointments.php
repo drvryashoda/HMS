@@ -39,8 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'created_at' => now(),
                 ]);
 
-                $upd = $pdo->prepare('UPDATE appointment_slots SET is_booked = 1 WHERE id = :id');
-                $upd->execute(['id' => $slotId]);
+                $pdo->prepare('UPDATE appointment_slots SET is_booked = 1 WHERE id = :id')->execute(['id' => $slotId]);
                 $pdo->commit();
 
                 $to = $config['doctor_email'];
@@ -56,27 +55,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $slots = db()->query('SELECT * FROM appointment_slots WHERE is_booked = 0 AND slot_date >= CURDATE() ORDER BY slot_date, slot_time')->fetchAll();
+$slotsByDate = [];
+foreach ($slots as $slot) {
+    $slotsByDate[$slot['slot_date']][] = $slot;
+}
 
 require __DIR__ . '/app/header.php';
 ?>
-<section class="container section narrow">
+<section class="container section">
 <h1>Book an Appointment</h1>
 <?php if ($message): ?><p class="alert success"><?= e($message) ?></p><?php endif; ?>
 <?php if ($error): ?><p class="alert error"><?= e($error) ?></p><?php endif; ?>
-<form method="post" class="card form-grid">
-    <input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>">
-    <label>Select Slot</label>
-    <select name="slot_id" required>
-        <option value="">Choose available slot</option>
-        <?php foreach ($slots as $slot): ?>
-            <option value="<?= (int) $slot['id'] ?>"><?= e($slot['slot_date'] . ' ' . substr($slot['slot_time'], 0, 5)) ?></option>
-        <?php endforeach; ?>
-    </select>
-    <input name="patient_name" placeholder="Your Name" required>
-    <input type="email" name="patient_email" placeholder="Your Email" required>
-    <input name="patient_phone" placeholder="Phone Number">
-    <textarea name="notes" placeholder="Symptoms / notes"></textarea>
-    <button type="submit">Submit Appointment</button>
-</form>
+
+<div class="appointment-layout">
+    <div class="card">
+        <h3>1. Pick a Day</h3>
+        <div class="date-chip-wrap" id="date-chips">
+            <?php foreach (array_keys($slotsByDate) as $i => $date): ?>
+                <button type="button" class="date-chip<?= $i === 0 ? ' active' : '' ?>" data-date="<?= e($date) ?>"><?= e(date('D, M d', strtotime($date))) ?></button>
+            <?php endforeach; ?>
+            <?php if (!$slotsByDate): ?><p>No slots available right now.</p><?php endif; ?>
+        </div>
+    </div>
+
+    <form method="post" class="card form-grid">
+        <h3>2. Choose Time & Enter Details</h3>
+        <input type="hidden" name="_csrf" value="<?= e(csrf_token()) ?>">
+        <select name="slot_id" id="slot-select" required>
+            <?php foreach ($slotsByDate as $date => $dateSlots): ?>
+                <optgroup label="<?= e($date) ?>" data-date-group="<?= e($date) ?>">
+                    <?php foreach ($dateSlots as $slot): ?>
+                        <option value="<?= (int) $slot['id'] ?>" data-date="<?= e($date) ?>"><?= e(substr($slot['slot_time'], 0, 5)) ?></option>
+                    <?php endforeach; ?>
+                </optgroup>
+            <?php endforeach; ?>
+        </select>
+        <input name="patient_name" placeholder="Your Name" required>
+        <input type="email" name="patient_email" placeholder="Your Email" required>
+        <input name="patient_phone" placeholder="Phone Number">
+        <textarea name="notes" placeholder="Symptoms / notes"></textarea>
+        <button type="submit">Submit Appointment</button>
+    </form>
+</div>
 </section>
+<script>
+const chips = document.querySelectorAll('.date-chip');
+const select = document.getElementById('slot-select');
+function filterSlots(date) {
+  const options = select.querySelectorAll('option');
+  let firstVisible = null;
+  options.forEach(opt => {
+    const show = opt.dataset.date === date;
+    opt.hidden = !show;
+    if (show && !firstVisible) firstVisible = opt;
+  });
+  if (firstVisible) firstVisible.selected = true;
+}
+chips.forEach(chip => {
+  chip.addEventListener('click', () => {
+    chips.forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    filterSlots(chip.dataset.date);
+  });
+});
+if (chips[0]) filterSlots(chips[0].dataset.date);
+</script>
 <?php require __DIR__ . '/app/footer.php'; ?>

@@ -9,9 +9,12 @@ require __DIR__ . '/app/header.php';
 <h1>Health Articles</h1>
 <div class="grid">
 <?php foreach ($articles as $article): ?>
-<article class="card">
-    <h2><a href="/article.php?slug=<?= e($article['slug']) ?>"><?= e($article['title']) ?></a></h2>
-    <p><?= e($article['excerpt']) ?></p>
+<article class="card article-card">
+    <?php if (!empty($article['featured_image'])): ?><img src="<?= e($article['featured_image']) ?>" alt="<?= e($article['title']) ?>"><?php endif; ?>
+    <div class="article-body">
+        <h2><a href="/article.php?slug=<?= e($article['slug']) ?>"><?= e($article['title']) ?></a></h2>
+        <p><?= e($article['excerpt']) ?></p>
+    </div>
 </article>
 <?php endforeach; ?>
 <?php if (!$articles): ?><p>No published posts yet.</p><?php endif; ?>

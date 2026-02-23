@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS articles (
     slug VARCHAR(255) NOT NULL UNIQUE,
     excerpt TEXT,
     body LONGTEXT NOT NULL,
+    featured_image VARCHAR(255) NULL,
     seo_title VARCHAR(255) NULL,
     seo_description TEXT NULL,
     status ENUM('draft', 'published') NOT NULL DEFAULT 'draft',
@@ -61,7 +62,8 @@ CREATE TABLE IF NOT EXISTS appointment_slots (
     slot_date DATE NOT NULL,
     slot_time TIME NOT NULL,
     is_booked TINYINT(1) NOT NULL DEFAULT 0,
-    created_at DATETIME NOT NULL
+    created_at DATETIME NOT NULL,
+    UNIQUE KEY uniq_slot (slot_date, slot_time)
 );
 
 CREATE TABLE IF NOT EXISTS appointments (

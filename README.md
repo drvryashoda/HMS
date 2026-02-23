@@ -1,11 +1,13 @@
 # HMS - Doctor Portfolio CMS
 
 Installable PHP/MySQL doctor portfolio website with:
-- Premium minimal home page with hero banner
-- Latest and featured articles
+- Modern premium-minimal UI and UX for patient-facing pages
+- Home hero banner + latest and featured articles sections
 - About, contact, terms, and privacy pages
-- Appointment booking with doctor slot selection and email notification
+- Appointment booking with date-first slot picker and doctor email notification
+- Recurring appointment schedule generator in admin panel (range + weekdays + interval)
 - Admin panel for login, article/category/tag management, and slot management
+- Article featured images (upload or URL) fully manageable via admin
 - Built-in SEO meta structure (title/description/keywords/canonical + OpenGraph/Twitter)
 
 ## Installation (Shared Hosting Friendly)
@@ -21,3 +23,4 @@ Installable PHP/MySQL doctor portfolio website with:
 - MySQL / MariaDB
 - `PDO` extension enabled
 - `mail()` configured on server for appointment notifications
+- Write permission for `/uploads` directory for image uploads
